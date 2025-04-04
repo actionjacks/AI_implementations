@@ -9,4 +9,4 @@ After launching the containers, you need to **manually download the required Oll
 ```bash
 docker exec -it 2-rag-ollama-1 sh
 ollama pull deepseek-r1:7b
-ollama pull omic-embed-text
+ollama pull nomic-embed-text

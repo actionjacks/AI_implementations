@@ -1,1 +1,1 @@
-2 - based on https://github.com/rag-web-ui/rag-web-ui
+2 - based on https://github.com/rag-web-ui/rag-web-ui  (I changed the default implementation to be based on the ollama language model)

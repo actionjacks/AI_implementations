@@ -1,0 +1,66 @@
+version: '3.4'
+
+services:
+    openwebui: #(http://localhost:8333)
+        image: ghcr.io/open-webui/open-webui:main
+        restart: unless-stopped
+        depends_on:
+            - ollamadeepseek
+        ports:
+           - '8333:8080'
+        volumes:
+          - './open-webui:/app/backend/data'
+        environment:
+            OLLAMA_BASE_URL: http://ollamadeepseek:11436  # Make sure the address matches the port in ollama deepseek.
+        networks:
+          - ollama-network
+
+    ollamadeepseek: 
+        build:
+            context: ./ollama
+            dockerfile: Dockerfile
+        restart: unless-stopped
+        ports:
+           - '11436:11436'
+        volumes:
+          - './ollama:/root/.ollama'  # Folder for storing models.
+        environment:
+            OLLAMA_HOST: 0.0.0.0  # Host on which Ollama should listen.
+            OLLAMA_PORT: 11436  # The port that Ollama listens to internally.
+            OLLAMA_MODELS: /root/.ollama/models
+        networks:
+          - ollama-network
+        # If GPU is not available, comment the lines below:
+        # (instruction in README.md)
+        deploy:
+          resources:
+            limits:
+              memory: 16G
+            reservations:
+              memory: 14G
+              devices:
+                - driver: nvidia
+                  count: all
+                  capabilities: [gpu]
+        runtime: nvidia
+        #
+      
+    goapp:
+      build:
+          context: ./goapp  # Path to your Go application directory
+          dockerfile: Dockerfile  # Dockerfile for your Go application
+      restart: unless-stopped
+      ports:
+        - '8081:8080'  # Expose port 8080 of the Go app to host port 8081
+      volumes:
+        - './goapp:/app'  # Mount your Go application folder
+      environment:
+          OLLAMA_API_URL: http://ollamadeepseek:11436  # URL to Ollama API
+      networks:
+        - ollama-network
+      depends_on:
+        - ollamadeepseek  # Ensure Ollama is running before starting the Go app
+
+networks:
+    ollama-network:
+        driver: bridge

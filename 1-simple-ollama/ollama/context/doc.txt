@@ -1,0 +1,123 @@
+FROM llama3:8b
+
+SYSTEM """
+Jesteś asystentem odpowiedzialnym za udzielanie odpowiedzi na pytania dotyczące regulaminu aplikacji shop.hipercloud.pl.
+Nazywasz się Kuba i komunikujesz się wyłącznie w języku polskim. Po każdej odpowiedzi dodawaj: "Kuba jest szczęśliwy, że może odpowiedzieć."
+Jeśli nie potrafisz udzielić odpowiedzi na podstawie dostępnej wiedzy, przekieruj użytkownika na infolinię pod numer: +48 123 123 123.
+Nie wymyślaj odpowiedzi jeśli czegoś nie wiesz, zawsze odsyłaj na infolinię.
+"""
+
+MESSAGE user """
+EGULAMIN APLIKACJI SHOP.HIPERCLOUD.PL
+I. POSTANOWIENIA OGÓLNE
+1. Regulamin określa ogólne warunki, zasady, prawa i obowiązki Sprzedawcy oraz Usługodawcy
+oraz sposób świadczenia usług dostępnych w Aplikacji Web www.shop.hipercloud.pl.
+2. Aplikacja ma charakter usługowy, umożliwiający prowadzenie, organizację i obsługę m.in.
+Sklepów.
+3. Usługi są adresowane dla Przedsiębiorców lub Przedsiębiorców na prawach konsumenta.
+4. W zakresie nieuregulowanym w niniejszym Regulaminie, zastosowanie mają postanowienia
+Regulaminu Serwisu internetowego www.hipercloud.pl.
+5. Aplikacja prowadzona jest przez NET INNOVATION SOFTWARE SPÓŁKĘ Z OGRANICZONĄ
+ODPOWIEDZIALNOŚCIĄ z siedzibą w Białymstoku, pod adresem ul. Plażowa 35, 15-502
+Białystok, zarejestrowana przez Sąd Rejonowy w Białymstoku, XII Wydział Gospodarczy
+Krajowego Rejestru Sądowego, KRS 0000070158, NIP 5422611697, REGON 050858149, o
+kapitale zakładowym w wysokości: 120 000,00 zł, zwana dalej Usługodawcą.
+6. Regulamin jest nieprzerwanie i nieodpłatnie udostępniony przez Usługodawcę w witrynie
+internetowej www.hipercloud.pl, w sposób umożliwiający Sprzedawcom jego pozyskanie,
+odtwarzanie i utrwalanie jego treści poprzez wydrukowanie lub zapisanie na nośniku w każdej
+chwili za pomocą systemu informatycznego, którym posługuje się Sprzedawca.
+II. SŁOWNICZEK
+Pojęcia zapisane dużą literą mają znaczenia nadane im w Regulaminie Serwisu natomiast pojęcia
+określone poniżej mają następujące znaczenie:
+Dokumenty – dokumenty, które Sprzedawca może umieszczać, generować lub pobierać z Aplikacji,
+związane z prowadzonym przez niego Sklepem;
+Towary – produkty fizyczne, które Sprzedawca wprowadza do Aplikacji w celu możliwości ich
+sprzedaży w Sklepie;
+Europlatform – serwis internetowy prowadzony przez Innowacyjna Platforma Handlu sp. z o.o. z
+siedzibą w Komornikach pod adresem www.europlatform.pl;
+Pracownik - pracownik, współpracownik bądź inny podmiot, z którym Sprzedawca współpracuje w
+ramach odrębnych umów, który również może korzystać z Aplikacji w zakresie uprawnień nadanych
+mu przez Sprzedawcę;
+Przedsiębiorca – podmiot będący przedsiębiorcą w rozumieniu art. 43[1] Kodeksu cywilnego z
+wyłączeniem Przedsiębiorcy na prawach konsumenta;
+Przedsiębiorca na prawach konsumenta - osoba fizyczna prowadząca jednoosobową działalność
+gospodarczą, będąca przedsiębiorcą w rozumieniu art. 43 [1] Kodeksu cywilnego, dla której zawarcie
+umowy jest bezpośrednio związane z jej działalnością gospodarczą, ale nie ma charakteru
+zawodowego, wynikającego w szczególności z przedmiotu wykonywanej przez nią działalności
+gospodarczej, udostępnionego na podstawie przepisów o Centralnej Ewidencji i Informacji o
+Działalności Gospodarczej.
+HiperCloud
+Zarządzaj sprzedażą z dowolnego miejsca, o każdej porze!
+HiperCloud to nowoczesny system zarządzania sprzedażą w chmurze, stworzony z myślą o usprawnieniu pracy firm handlowych. Dzięki szerokiej gamie funkcji, pozwala na efektywne zarządzanie towarami, pracownikami oraz dokumentacją sprzedażową.
+Kluczowe funkcjonalności:
+Towary:
+Dodawanie i edycja towarów: Zarządzaj asortymentem w prosty i intuicyjny sposób.
+Zmiana cen: Aktualizuj ceny towarów w czasie rzeczywistym.
+Wycena i drukowanie etykiet: Automatyzacja procesów etykietowania zapewnia szybkość i efektywność.
+Eksport danych: Wygodne eksportowanie informacji o towarach w różnych formatach.
+Pracownicy:
+Dodawanie i edycja pracowników: Zarządzaj danymi swojego zespołu z jednego miejsca.
+Zarządzanie dostępami: Łatwe kontrolowanie uprawnień poszczególnych pracowników.
+Eksport danych: Możliwość eksportu listy pracowników do różnych formatów.
+Dokumenty:
+Przyjęcie dostaw (PZ): Kompleksowe zarządzanie dokumentami dostaw, od przyjęcia do edycji i korekt.
+Zarządzanie fakturami: Wystawiaj faktury oraz inne dokumenty sprzedażowe i księgowe.
+Korygowanie dokumentów: Możliwość szybkiego wprowadzania zmian w istniejących dokumentach.
+Drukowanie i eksport: Drukuj i eksportuj dokumenty w dogodnych formatach.
+Raporty:
+Sprzedaż detaliczna: Generuj raporty sprzedaży według towarów, producentów i kategorii.
+Raporty stanów magazynowych: Monitoruj bieżące stany magazynowe i twórz raporty koncesyjne.
+Obroty za okres: Analizuj dane sprzedażowe na przestrzeni wybranego okresu czasu.
+Praca kasy:
+Raporty kasowe: Śledź raporty z działalności kas fiskalnych.
+Anulowanie paragonów: Szybka obsługa i możliwość anulowania transakcji.
+Inwentaryzacja:
+Tworzenie dokumentów inwentaryzacyjnych: Łatwo zarządzaj inwentaryzacją i twórz dokumenty.
+Filtrowanie danych: Skutecznie filtruj informacje o towarach i remanentach.
+Dlaczego HiperCloud?
+Zarządzanie z dowolnego miejsca: HiperCloud działa w chmurze, co pozwala na pełną kontrolę nad firmą z każdego urządzenia podłączonego do Internetu.
+Bezpieczeństwo danych: Zabezpiecz swoje dane z pomocą zaawansowanych technologii ochrony.
+Skalowalność: System rozwija się razem z Twoją firmą – bez względu na wielkość.
+Jak wystawić fakturę sprzedaży:
+Faktura sprzedaży do paragonu.
+Po wejściu do listy paragonów, wybieramy paragon do, którego chcemy wystawić FV sprzedaży.
+Następnie należy wybrać z menu głównego Wystaw fakturę. Pojawi się okno z wyborem nabywcy,
+którego należy wcześniej zdefiniować w module Faktury.
+Automatycznie pojawia się dokument Faktury Vat do wydruku. Dodatkowo dokument FV pojawi
+się w module Faktury.
+Faktura sprzedaży bez paragonu.
+Aby wystawić fv sprzedaży np. na przelew należy najpierw wystawić dokument WZ w module
+Dokumenty. Następnie zaznaczyć dany dokument WZ i w prawym górnym rogu wybrać z menu
+Wystaw fakturę do zaznaczonych dokumentów. Pojawi się okno z wyborem daty wystawienia
+faktury i metodą płatności. Po wybraniu zapisz pojawi się kolejne okno z akceptacja operacji. Aby
+przejść dalej należy potwierdzić TAK.
+Przetwórz ceny na sklepach
+Funkcjonalność Przetwórz ceny na sklepach umożliwia ręczne wysłanie zaktualizowanych cen do
+sklepów. W przypadku zmian, na przykład w gazetkach promocyjnych, istnieje możliwość
+natychmiastowego przesłania tych zmian do sklepów. Ceny na kasach są automatycznie
+aktualizowane. Aby skorzystać z tej opcji, należy przejść do centrali, wybrać moduł Konfiguracja,
+a następnie opcję Przetwórz ceny na sklepach. Po tym kroku pojawi się okno, w którym należy
+zaakceptować daną czynność.
+Aplikacja HiperCloud
+Podczas logowania się na stronie www na telefonie, tablecie lub przeglądarce Chrom istnieje
+możliwość pobrania aplikacji HiperCloud. Aplikacja ułatwia szybki dostęp do programu
+bezpośrednio z urządzeń mobilnych lub z ikony na pulpicie.
+Dodawanie do bufora towarów
+W katalogu towarowym i sklepowym po zaznaczeniu wybranego artykułu lub kilku wybieramy
+„Dodaj do bufora”. Po dodaniu towarów można zobaczyć zawartość bufora klikając ikonę bufora.
+Zapisując towary, zaznaczone w buforze, do kolekcji możemy w szybki sposób wybierać wybrany
+asortyment np. zakładając gazetki promocyjne lub wyprzedaże.
+Przycisk Widok bufora pokazuje w głównym katalogu towarowym tylko towary z bufora. Przycisk
+Resetuj widok bufora pokazuje cały katalog towarowy wraz z zaznaczonymi do bufora towarami.
+Aby usunąć towary z bufora należy użyć przycisku Wyczyść.
+Dodawanie indeksu dostawcy
+Dodawanie wszystkich atrybutów towarów dostępne jest jedynie z poziomu Centrali. W katalogu
+towarowym po zaznaczeniu wybranego artykułu (checkbox lub zaznaczenie linii) wybieramy „trzy
+kropki”, następnie Indeks dostawcy. Następnie Dodaj nowy indeks. Po uzupełnieniu wszystkich
+niezbędnych pól wybieramy Zapisz.
+Dodawanie kodu opakowania zbiorczego
+Dodawanie wszystkich atrybutów towarów dostępne jest jedynie z poziomu Centrali. W katalogu
+towarowym po zaznaczeniu wybranego artykułu (checkbox lub zaznaczenie linii) wybieramy „trzy
+kropki”, następnie Kod opakowania zbiorczego. Po uzupełnieniu wszystkich niezbędnych pól
+wybieramy Zapisz.
+"""

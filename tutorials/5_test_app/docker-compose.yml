@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  chroma_db:
+    image: chromadb/chroma
+    container_name: chroma_db
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./chroma-data:/data
+    environment:
+      - CHROMA_API_HOST=0.0.0.0
+    restart: always

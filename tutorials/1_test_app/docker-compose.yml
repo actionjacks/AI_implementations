@@ -1,0 +1,25 @@
+
+services:
+  # Serwis dla Qdrant (wektorowa baza danych)
+  qdrant:
+    image: qdrant/qdrant:v1.2.0
+    container_name: qdrant
+    # environment:
+    #   - QDRANT__STORE__VECTOR_DIM=1536  # Przykład: rozmiar wektora
+    ports:
+      - "6333:6333"  # Port, przez który będziesz się łączyć z Qdrant
+    volumes:
+      - qdrant-storage:/qdrant/storage
+
+  # Serwis dla Ollama (serwer do generowania odpowiedzi)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"  # Port, przez który będziesz się łączyć z Ollama
+    # environment:
+    #   - OLLAMA_API_KEY=your_ollama_api_key_here  # Jeżeli wymaga API key
+
+volumes:
+  qdrant-storage:
+

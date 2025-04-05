@@ -1,0 +1,6 @@
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/ledongthuc/pdf v0.0.0-20240201131950-da5b75280b06 h1:kacRlPN7EN++tVpGUorNGPn/4DnB7/DfTY82AOn6ccU=
+github.com/ledongthuc/pdf v0.0.0-20240201131950-da5b75280b06/go.mod h1:imJHygn/1yfhB7XSJJKlFZKl/J+dCPAknuiaGOshXAs=
+github.com/stackloklabs/gorag v0.0.1 h1:Jd4KbSAwgXNKbwUzjUWNNn8SHQNxE7LWsmyv7QNxGWg=
+github.com/stackloklabs/gorag v0.0.1/go.mod h1:l3PWE8pa04ABhRVRen2dTFsmBQB9oNWX4VRaweSBKpM=

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Client</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <input type="text" id="questionInput" placeholder="Zadaj pytanie...">
+    <button onclick="sendQuestion()">Wyślij</button>
+    <div id="response"></div>
+
+    <script>
+        const socket = io('http://localhost:3000');
+        
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('response', (response) => {
+            document.getElementById('response').innerHTML += `<p>${response}</p>`;
+        });
+
+        socket.on('error', (error) => {
+            console.error('Error:', error);
+        });
+
+        function sendQuestion() {
+            const question = document.getElementById('questionInput').value;
+            socket.emit('query', question);
+        }
+    </script>
+</body>
+</html>

@@ -26,7 +26,7 @@ async function initializeRAG() {
             .setModel(new Ollama({ modelName: "llama3:latest", baseUrl: 'http://localhost:11434' }))
             .setEmbeddingModel(new OllamaEmbeddings({ model: 'mxbai-embed-large:latest', baseUrl: 'http://localhost:11434' }))
             .setVectorDatabase(new HNSWDb())
-            .setStore(new RedisStore({ host: 'localhost', port: 6379 }))
+            // .setStore(new RedisStore({ host: 'localhost', port: 6379 })) // TODO configure Redis
             .setSystemMessage(`
                 Jestes polakiem, asystentem AI. 
                 Pamietaj zeby mowic po polsku. 

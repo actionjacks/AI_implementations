@@ -3,12 +3,19 @@ import { Request, Response, NextFunction } from 'express';
 
 const router = Router();
 
-router.get('/', (req: Request, res: Response, next: NextFunction)=> {
-    res.status(200).json({
-        message: 'Model route is working',
-        data: null,
-        error: null,
-    });
+router.get('/', async(req: Request, res: Response, next: NextFunction) => {
+    console.log(req.app.locals.ragApplication, '<---');
+    const result = await req.app.locals.ragApplication.query('Ile to 2 plus 2?');
+    console.log(result, '<--- result');
+    try {
+        res.status(200).json({
+            message: 'Model route is working',
+            data: result.content,
+            error: null,
+        });
+    } catch (err) {
+        next(err);
+    }
 });
 
 export default router;

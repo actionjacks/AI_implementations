@@ -4,8 +4,7 @@ import modelRoutes from './routes/modelRoutes';
 import { RAGApplication, RAGApplicationBuilder } from '@llm-tools/embedjs';
 import { OllamaEmbeddings, Ollama } from '@llm-tools/embedjs-ollama';
 import { HNSWDb } from '@llm-tools/embedjs-hnswlib';
-
-// let ragApplication: RAGApplication;
+import { PdfLoader } from '@llm-tools/embedjs-loader-pdf';
 
 const app = express();
 
@@ -20,8 +19,12 @@ async function initializeRAG() {
             .setVectorDatabase(new HNSWDb())
             .build();
 
-        // Zapisanie modelu do app.locals, aby był dostępny globalnie
-        // ragApplication = app;
+        ragApplication.addLoader(
+            new PdfLoader({
+                filePathOrUrl: './pdf_files/example.pdf'
+            })
+        )
+
         app.locals = {
             ragApplication
         };

@@ -5,8 +5,11 @@ const router = Router();
 
 router.get('/', async(req: Request, res: Response, next: NextFunction) => {
     console.log(req.app.locals.ragApplication, '<---');
-    const result = await req.app.locals.ragApplication.query('Ile to 2 plus 2?');
+
+    const result = await req.app.locals.ragApplication.query('co to jest bufor?');
+
     console.log(result, '<--- result');
+
     try {
         res.status(200).json({
             message: 'Model route is working',
@@ -16,6 +19,16 @@ router.get('/', async(req: Request, res: Response, next: NextFunction) => {
     } catch (err) {
         next(err);
     }
+});
+
+router.get('/upload', async(req: Request, res: Response, next: NextFunction) => {
+    console.log('=====================');
+
+    res.status(200).json({
+        message: 'upload',
+        data: 'upload',
+        error: null,
+    })
 });
 
 export default router;

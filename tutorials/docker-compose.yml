@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  chroma_db:
+    image: chromadb/chroma
+    container_name: chroma_db
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma-data:/data
+    environment:
+      - CHROMA_API_HOST=0.0.0.0
+      # - CHROMA_SERVER_AUTHN_PROVIDER=token
+      # - CHROMA_SERVER_AUTHN_CREDENTIALS=test-token
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant
+    container_name: qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  chroma-data:
+    driver: local
+  qdrant-data:
+    driver: local
+  ollama-models:
+    driver: local

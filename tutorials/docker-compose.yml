@@ -10,8 +10,6 @@ services:
       - chroma-data:/data
     environment:
       - CHROMA_API_HOST=0.0.0.0
-      # - CHROMA_SERVER_AUTHN_PROVIDER=token
-      # - CHROMA_SERVER_AUTHN_CREDENTIALS=test-token
     restart: unless-stopped
 
   qdrant:
@@ -33,10 +31,21 @@ services:
       - ollama-models:/root/.ollama
     restart: unless-stopped
 
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data 
+    restart: unless-stopped
+
 volumes:
   chroma-data:
     driver: local
   qdrant-data:
     driver: local
   ollama-models:
+    driver: local
+  redis-data:
     driver: local

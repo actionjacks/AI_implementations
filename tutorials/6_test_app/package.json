@@ -31,6 +31,7 @@
     "@llm-tools/embedjs-loader-pdf": "^0.1.28",
     "@llm-tools/embedjs-loader-web": "^0.1.28",
     "@llm-tools/embedjs-ollama": "^0.1.28",
+    "@llm-tools/embedjs-redis": "^0.1.28",
     "socket.io": "^4.8.1"
   }
 }

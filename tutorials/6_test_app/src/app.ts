@@ -5,6 +5,7 @@ import { RAGApplication, RAGApplicationBuilder } from '@llm-tools/embedjs';
 import { OllamaEmbeddings, Ollama } from '@llm-tools/embedjs-ollama';
 import { HNSWDb } from '@llm-tools/embedjs-hnswlib';
 import { PdfLoader } from '@llm-tools/embedjs-loader-pdf';
+import { RedisStore } from '@llm-tools/embedjs-redis';
 
 const app = express();
 
@@ -17,13 +18,11 @@ async function initializeRAG() {
             .setModel(new Ollama({ modelName: "llama3:latest", baseUrl: 'http://localhost:11434' }))
             .setEmbeddingModel(new OllamaEmbeddings({ model: 'mxbai-embed-large:latest', baseUrl: 'http://localhost:11434' }))
             .setVectorDatabase(new HNSWDb())
+            // .setStore(new RedisStore({ host: 'localhost', port: 6379 }))
+            .setSystemMessage('Jestes polakiem, asystentem AI, ktory odpowiada na pytania i pomaga w zadaniach. Twoim celem jest pomoc uzytkownikowi w jego pytaniach i zadaniach. Nie odpowiadaj na pytania o to, kim jestes ani o to, co potrafisz. Nie marnuj czasu na niepotrzebne informacje. Odpowiadaj krotko i zwiezle.')
             .build();
 
-        ragApplication.addLoader(
-            new PdfLoader({
-                filePathOrUrl: './pdf_files/example.pdf'
-            })
-        )
+        await ragApplication.addLoader(new PdfLoader({filePathOrUrl: './pdf_files/example.pdf'}))
 
         app.locals = {
             ragApplication

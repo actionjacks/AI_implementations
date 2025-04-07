@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	stdcontext "context"
 	"fmt"
 	"log"
 	"net/http"
@@ -193,6 +192,33 @@ func generateEmbedding(client *api.Client, model, text string) ([]float32, error
 	return embedding32, nil
 }
 
+// Funkcja do pobierania kontekstu z Qdrant
+func getContextFromQdrant(qdrantClient *qdrant.Client, collectionName string, questionEmbedding []float32) (string, error) {
+	searchResult, err := qdrantClient.Query(context.Background(), &qdrant.QueryPoints{
+		CollectionName: collectionName,
+		Query:          qdrant.NewQuery(questionEmbedding...),
+		WithPayload:    qdrant.NewWithPayload(true),
+		Limit:          5,
+	})
+	if err != nil {
+		return "", fmt.Errorf("błąd wyszukiwania w Qdrant: %v", err)
+	}
+
+	var contextBuilder strings.Builder
+	for _, result := range searchResult {
+		if payload := result.GetPayload(); payload != nil {
+			if textValue, ok := payload["text"]; ok {
+				if text := textValue.GetStringValue(); text != "" {
+					contextBuilder.WriteString(text + "\n\n")
+				} else {
+					log.Printf("Oczekiwano string w payloadzie 'text', znaleziono inny typ.")
+				}
+			}
+		}
+	}
+	return contextBuilder.String(), nil
+}
+
 // Funkcja do zadawania pytania i uzyskiwania odpowiedzi z kontekstem z Qdrant i Ollamy
 func getAnswerFromDocument(ollamaClient *api.Client, qdrantClient *qdrant.Client, chatModel, embeddingModel, collectionName, question string) (string, error) {
 	// 1. Generowanie embeddingu dla pytania
@@ -201,44 +227,33 @@ func getAnswerFromDocument(ollamaClient *api.Client, qdrantClient *qdrant.Client
 		return "", fmt.Errorf("błąd generowania embeddingu pytania: %v", err)
 	}
 
-	// 2. Wyszukiwanie podobnych fragmentów w Qdrant
-	searchResult, err := qdrantClient.Query(context.Background(), &qdrant.QueryPoints{
-		CollectionName: collectionName,
-		Query:          qdrant.NewQuery(questionEmbedding...),
-		WithPayload:    qdrant.NewWithPayload(true),
-		Limit:          5, // Możesz dostosować liczbę wyników
-	})
+	// 2. Pobranie kontekstu z Qdrant
+	context, err := getContextFromQdrant(qdrantClient, collectionName, questionEmbedding)
 	if err != nil {
-		return "", fmt.Errorf("błąd wyszukiwania w Qdrant: %v", err)
+		return "", err
 	}
 
-	// 3. Budowanie kontekstu dla Ollamy
-	var contextBuilder strings.Builder
-	for _, result := range searchResult {
-		if payload := result.GetPayload(); payload != nil {
-			if textValue, ok := payload["text"]; ok {
-				if text := textValue.GetStringValue(); text != "" { // Poprawione wydobycie stringa
-					contextBuilder.WriteString(text + "\n\n")
-				} else {
-					log.Printf("Oczekiwano string w payloadzie 'text', znaleziono inny typ.")
-				}
-			}
-		}
+	// 3. Zadanie pytania Ollamie z kontekstem
+	answer, err := askOllamaWithContext(ollamaClient, chatModel, question, context)
+	if err != nil {
+		return "", err
 	}
-	context := contextBuilder.String()
+	return answer, nil
+}
 
-	// 4. Zadawanie pytania Ollamie z kontekstem
-	prompt := fmt.Sprintf(`Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu. Jeśli nie znasz odpowiedzi, powiedz "Nie wiem". Pytanie: %sKontekst:%sOdpowiedź:`, question, context)
+// Funkcja do zadawania pytania Ollamie z kontekstem
+func askOllamaWithContext(ollamaClient *api.Client, chatModel, question, context string) (string, error) {
+	prompt := fmt.Sprintf(`Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu.Jeśli nie znasz odpowiedzi, powiedz "Nie wiem". Pytanie: %s Kontekst: %s Odpowiedź:`, question, context)
 
 	var response string
-	err = ollamaClient.Generate(stdcontext.Background(), &api.GenerateRequest{
+	err := ollamaClient.Generate(context.Background(), &api.GenerateRequest{
 		Model:  chatModel,
 		Prompt: prompt,
 		Options: map[string]interface{}{
 			"temperature": 0.3,
 		},
-	}, func(genResp api.GenerateResponse) error { // Zmiana nazwy zmiennej z resp na genResp
-		response += genResp.Response // Akumulacja odpowiedzi
+	}, func(genResp api.GenerateResponse) error {
+		response += genResp.Response
 		return nil
 	})
 	if err != nil {

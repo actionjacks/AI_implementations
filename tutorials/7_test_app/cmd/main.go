@@ -11,7 +11,9 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/gookit/color" // Dodano bibliotekę kolorów
 	"github.com/ledongthuc/pdf"
 	"github.com/ollama/ollama/api"
 	"github.com/qdrant/go-client/qdrant"
@@ -28,7 +30,22 @@ const (
 	pdfFilePath    = "example.pdf"       // Ścieżka do pliku PDF
 )
 
-// main.go -keep-history=false
+// Funkcja do wyświetlania animacji spinnera
+func showSpinner(done chan bool) {
+	spinner := []string{"|", "/", "-", "\\"}
+	i := 0
+	for {
+		select {
+		case <-done:
+			return
+		default:
+			fmt.Printf("\rOczekiwanie na odpowiedź... %s", spinner[i])
+			i = (i + 1) % len(spinner)
+			time.Sleep(100 * time.Millisecond) // Zmniejszono opóźnienie dla lepszej widoczności
+		}
+	}
+}
+
 func main() {
 	// Definiowanie flagi wiersza poleceń
 	keepHistory := flag.Bool("keep-history", false, "Czy model ma pamiętać historię rozmowy")
@@ -112,17 +129,17 @@ func main() {
 	conversationHistory := "" // Inicjalizacja pustej historii konwersacji
 
 	for {
-		fmt.Print("Zadaj pytanie (lub wpisz 'koniec' aby zakończyć): ")
+		color.Printf("<blue>Zadaj pytanie</>: ") // Pytanie użytkownika na niebiesko
 		question, _ := reader.ReadString('\n')
 		question = strings.TrimSpace(question)
 
 		if strings.ToLower(question) == "koniec" {
-			fmt.Println("Zakończono.")
+			color.Println("<yellow>Zakończono.</>") // Informacja o zakończeniu na żółto
 			break
 		}
 
 		if question == "" {
-			fmt.Println("Pytanie nie może być puste. Spróbuj ponownie.")
+			color.Println("<red>Pytanie nie może być puste. Spróbuj ponownie.</>") // Komunikat o błędzie na czerwono
 			continue
 		}
 
@@ -131,10 +148,18 @@ func main() {
 			conversationHistory += fmt.Sprintf("Pytanie: %s\n", question)
 		}
 
+		// Uruchom spinner
+		done := make(chan bool)
+		go showSpinner(done)
+
 		answer, err := getAnswerFromDocument(ollamaClient, qdrantClient, chatModel, embeddingModel, collectionName, question, conversationHistory)
+		// Zatrzymaj spinner
+		close(done)
+		fmt.Println() // Przejdź do nowej linii po zatrzymaniu spinnera
+
 		if err != nil {
 			log.Printf("Błąd podczas odpowiadania na pytanie: %v", err)
-			fmt.Println("Przepraszam, wystąpił problem z uzyskaniem odpowiedzi.")
+			color.Println("<red>Przepraszam, wystąpił problem z uzyskaniem odpowiedzi.</>") // Komunikat o błędzie na czerwono
 			continue
 		}
 
@@ -142,7 +167,7 @@ func main() {
 		if *keepHistory {
 			conversationHistory += fmt.Sprintf("Odpowiedź: %s\n", answer)
 		}
-		fmt.Printf("Pytanie: %s\nOdpowiedź: %s\n", question, answer)
+		color.Printf("<blue>Pytanie:</> %s\n<green>Odpowiedź:</> %s\n", question, answer) // Pytanie na niebiesko, odpowiedź na zielono
 	}
 }
 

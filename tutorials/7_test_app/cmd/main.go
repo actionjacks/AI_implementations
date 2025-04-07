@@ -103,6 +103,8 @@ func main() {
 
 	// Pętla interaktywna
 	reader := bufio.NewReader(os.Stdin)
+	conversationHistory := "" // Inicjalizacja pustej historii konwersacji
+
 	for {
 		fmt.Print("Zadaj pytanie (lub wpisz 'koniec' aby zakończyć): ")
 		question, _ := reader.ReadString('\n')
@@ -118,13 +120,18 @@ func main() {
 			continue
 		}
 
-		answer, err := getAnswerFromDocument(ollamaClient, qdrantClient, chatModel, embeddingModel, collectionName, question)
+		// Dodaj pytanie do historii
+		conversationHistory += fmt.Sprintf("Pytanie: %s\n", question)
+
+		answer, err := getAnswerFromDocument(ollamaClient, qdrantClient, chatModel, embeddingModel, collectionName, question, conversationHistory)
 		if err != nil {
-			log.Printf("Błąd podczas odpowiadania na pytanie: %v", err)           // Użyj log.Printf zamiast log.Fatalf
-			fmt.Println("Przepraszam, wystąpił problem z uzyskaniem odpowiedzi.") // Informacja dla użytkownika
-			continue                                                              // Przejdź do następnej iteracji pętli
+			log.Printf("Błąd podczas odpowiadania na pytanie: %v", err)
+			fmt.Println("Przepraszam, wystąpił problem z uzyskaniem odpowiedzi.")
+			continue
 		}
 
+		// Dodaj odpowiedź do historii
+		conversationHistory += fmt.Sprintf("Odpowiedź: %s\n", answer)
 		fmt.Printf("Pytanie: %s\nOdpowiedź: %s\n", question, answer)
 	}
 }
@@ -160,7 +167,7 @@ func splitTextIntoChunks(text string, chunkSize int) []string {
 
 // Funkcja do generowania embeddingów dla wielu fragmentów tekstu
 func generateEmbeddings(client *api.Client, model string, texts []string) ([][]float32, error) {
-	embeddings := make([][]float32, 0, len(texts)) // Alokacja z góry, żeby uniknąć realokacji
+	embeddings := make([][]float32, 0, len(texts))
 	for _, text := range texts {
 		embedding, err := generateEmbedding(client, model, text)
 		if err != nil {
@@ -190,12 +197,12 @@ func generateEmbedding(client *api.Client, model, text string) ([]float32, error
 
 // Funkcja do pobierania kontekstu z Qdrant
 func getContextFromQdrant(qdrantClient *qdrant.Client, collectionName string, questionEmbedding []float32) (string, error) {
-	limit := uint64(5) // Konwersja int do uint64
+	limit := uint64(5)
 	searchResult, err := qdrantClient.Query(context.Background(), &qdrant.QueryPoints{
 		CollectionName: collectionName,
 		Query:          qdrant.NewQuery(questionEmbedding...),
 		WithPayload:    qdrant.NewWithPayload(true),
-		Limit:          &limit, // Użycie adresu zmiennej typu *uint64
+		Limit:          &limit,
 	})
 	if err != nil {
 		return "", fmt.Errorf("błąd wyszukiwania w Qdrant: %v", err)
@@ -218,9 +225,9 @@ func getContextFromQdrant(qdrantClient *qdrant.Client, collectionName string, qu
 
 // Funkcja do zadawania pytania Ollamie z kontekstem
 func askOllamaWithContext(ollamaClient *api.Client, chatModel, question, contextStr string) (string, error) {
-	prompt := fmt.Sprintf(`
-    Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu. 
-    Pytanie: %s Kontekst: %s Odpowiedź:`, question, contextStr)
+	prompt := fmt.Sprintf(`%s Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu. 
+    Jeśli nie znasz odpowiedzi, powiedz "Nie wiem".
+    Pytanie: %s Kontekst: %s Odpowiedź:`, contextStr, question, contextStr)
 
 	var response string
 	err := ollamaClient.Generate(context.Background(), &api.GenerateRequest{
@@ -240,7 +247,7 @@ func askOllamaWithContext(ollamaClient *api.Client, chatModel, question, context
 }
 
 // Funkcja do zadawania pytania i uzyskiwania odpowiedzi z kontekstem z Qdrant i Ollamy
-func getAnswerFromDocument(ollamaClient *api.Client, qdrantClient *qdrant.Client, chatModel, embeddingModel, collectionName, question string) (string, error) {
+func getAnswerFromDocument(ollamaClient *api.Client, qdrantClient *qdrant.Client, chatModel, embeddingModel, collectionName, question, conversationHistory string) (string, error) {
 	// 1. Generowanie embeddingu dla pytania
 	questionEmbedding, err := generateEmbedding(ollamaClient, embeddingModel, question)
 	if err != nil {
@@ -253,7 +260,7 @@ func getAnswerFromDocument(ollamaClient *api.Client, qdrantClient *qdrant.Client
 		return "", err
 	}
 
-	// 3. Zadanie pytania Ollamie z kontekstem
+	// 3. Zadanie pytania Ollamie z kontekstem i historią
 	answer, err := askOllamaWithContext(ollamaClient, chatModel, question, context)
 	if err != nil {
 		return "", err

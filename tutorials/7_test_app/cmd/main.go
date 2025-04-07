@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gookit/color" // Dodano bibliotekę kolorów
 	"github.com/ledongthuc/pdf"
 	"github.com/ollama/ollama/api"
+	"github.com/pterm/pterm"
 	"github.com/qdrant/go-client/qdrant"
 )
 
@@ -30,18 +30,20 @@ const (
 	pdfFilePath    = "example.pdf"       // Ścieżka do pliku PDF
 )
 
-// Funkcja do wyświetlania animacji spinnera
+// Funkcja do wyświetlania animacji spinnera PTerm
 func showSpinner(done chan bool) {
-	spinner := []string{"|", "/", "-", "\\"}
-	i := 0
+	spinner, _ := pterm.DefaultSpinner.
+		WithRemoveWhenDone(true).
+		// WithSequence(" ", "█", " ", "█", " ").
+		Start("Oczekiwanie na odpowiedź...")
+
 	for {
 		select {
 		case <-done:
+			spinner.Stop()
 			return
 		default:
-			fmt.Printf("\rOczekiwanie na odpowiedź... %s", spinner[i])
-			i = (i + 1) % len(spinner)
-			time.Sleep(100 * time.Millisecond) // Zmniejszono opóźnienie dla lepszej widoczności
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
 }
@@ -49,30 +51,30 @@ func showSpinner(done chan bool) {
 func main() {
 	// Definiowanie flagi wiersza poleceń
 	keepHistory := flag.Bool("keep-history", false, "Czy model ma pamiętać historię rozmowy")
-	flag.Parse() // Parsowanie flag
+	flag.Parse()
 
 	// 0. Sprawdzenie czy plik PDF istnieje
 	if _, err := os.Stat(pdfFilePath); os.IsNotExist(err) {
-		log.Fatalf("Plik PDF nie istnieje: %v", err)
+		pterm.Fatal.Printf("Plik PDF nie istnieje: %v\n", err)
 	}
 
 	// 1. Ekstrakcja tekstu z PDF
 	pdfText, err := extractTextFromPDF(pdfFilePath)
 	if err != nil {
-		log.Fatalf("Błąd ekstrakcji PDF: %v", err)
+		pterm.Fatal.Printf("Błąd ekstrakcji PDF: %v\n", err)
 	}
 	chunks := splitTextIntoChunks(pdfText, 500)
 
 	// 2. Generowanie embeddingów
 	ollamaURL, err := url.Parse(ollamaURLStr)
 	if err != nil {
-		log.Fatalf("Błąd parsowania URL Ollama: %v", err)
+		pterm.Fatal.Printf("Błąd parsowania URL Ollama: %v\n", err)
 	}
 	ollamaClient := api.NewClient(ollamaURL, http.DefaultClient)
 
 	embeddings, err := generateEmbeddings(ollamaClient, embeddingModel, chunks)
 	if err != nil {
-		log.Fatalf("Błąd generowania embeddingów: %v", err)
+		pterm.Fatal.Printf("Błąd generowania embeddingów: %v\n", err)
 	}
 
 	// 3. Zapis do Qdrant
@@ -81,7 +83,7 @@ func main() {
 		Port: qdrantPort,
 	})
 	if err != nil {
-		log.Fatalf("Nie można połączyć się z Qdrant: %v", err)
+		pterm.Fatal.Printf("Nie można połączyć się z Qdrant: %v\n", err)
 	}
 	defer qdrantClient.Close()
 
@@ -96,9 +98,9 @@ func main() {
 		}),
 	})
 	if err != nil && !strings.Contains(err.Error(), "already exists") {
-		log.Fatalf("Błąd tworzenia kolekcji: %v", err)
+		pterm.Fatal.Printf("Błąd tworzenia kolekcji: %v\n", err)
 	} else if err != nil {
-		log.Printf("Kolekcja już istnieje: %v", err)
+		pterm.Info.Printf("Kolekcja już istnieje: %v\n", err)
 	}
 
 	// Przygotuj punkty do zapisu
@@ -120,30 +122,30 @@ func main() {
 		Points:         points,
 	})
 	if err != nil {
-		log.Fatalf("Błąd upsert: %v", err)
+		pterm.Fatal.Printf("Błąd upsert: %v\n", err)
 	}
-	log.Printf("Upsert operation info: %+v", operationInfo)
+	pterm.Info.Printf("Upsert operation info: %+v\n", operationInfo)
 
 	// Pętla interaktywna
 	reader := bufio.NewReader(os.Stdin)
-	conversationHistory := "" // Inicjalizacja pustej historii konwersacji
+	conversationHistory := ""
 
+	pterm.Success.Printf("Start a conversation with the model _ %s\n", chatModel)
 	for {
-		color.Printf("<blue>Zadaj pytanie</>: ") // Pytanie użytkownika na niebiesko
 		question, _ := reader.ReadString('\n')
 		question = strings.TrimSpace(question)
 
 		if strings.ToLower(question) == "koniec" {
-			color.Println("<yellow>Zakończono.</>") // Informacja o zakończeniu na żółto
+			pterm.Info.Printf("Zamykam aplikację.")
 			break
 		}
 
 		if question == "" {
-			color.Println("<red>Pytanie nie może być puste. Spróbuj ponownie.</>") // Komunikat o błędzie na czerwono
+			pterm.Error.Printf("Pytanie nie może być puste. Spróbuj ponownie.")
 			continue
 		}
 
-		// Dodaj pytanie do historii, jeśli flaga jest ustawiona
+		// Dodaj pytanie do historii
 		if *keepHistory {
 			conversationHistory += fmt.Sprintf("Pytanie: %s\n", question)
 		}
@@ -153,21 +155,23 @@ func main() {
 		go showSpinner(done)
 
 		answer, err := getAnswerFromDocument(ollamaClient, qdrantClient, chatModel, embeddingModel, collectionName, question, conversationHistory)
-		// Zatrzymaj spinner
 		close(done)
-		fmt.Println() // Przejdź do nowej linii po zatrzymaniu spinnera
+		pterm.Println()
 
 		if err != nil {
-			log.Printf("Błąd podczas odpowiadania na pytanie: %v", err)
-			color.Println("<red>Przepraszam, wystąpił problem z uzyskaniem odpowiedzi.</>") // Komunikat o błędzie na czerwono
+			pterm.Error.Printf("Przepraszam, wystąpił problem z uzyskaniem odpowiedzi.: %v\n", err)
 			continue
 		}
 
-		// Dodaj odpowiedź do historii, jeśli flaga jest ustawiona
+		// Dodaj odpowiedź do historii
 		if *keepHistory {
 			conversationHistory += fmt.Sprintf("Odpowiedź: %s\n", answer)
 		}
-		color.Printf("<blue>Pytanie:</> %s\n<green>Odpowiedź:</> %s\n", question, answer) // Pytanie na niebiesko, odpowiedź na zielono
+
+		// Wyświetl odpowiedź i czas
+		pterm.Success.Printf("question: %s\n", question)
+		pterm.Description.Printf("answer: %s\n", answer)
+		pterm.Info.Printf("Czas odpowiedzi: %s\n", time.Since(time.Now()).String())
 	}
 }
 
@@ -262,7 +266,7 @@ func getContextFromQdrant(qdrantClient *qdrant.Client, collectionName string, qu
 func askOllamaWithContext(ollamaClient *api.Client, chatModel, question, contextStr string) (string, error) {
 	prompt := fmt.Sprintf(`
     %s
-    Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu. 
+    Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu.
     Jeśli nie znasz odpowiedzi, powiedz "Nie wiem".
     Pytanie: %s Kontekst: %s Odpowiedź:`, contextStr, question, contextStr)
 

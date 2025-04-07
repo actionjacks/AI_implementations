@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -27,7 +28,12 @@ const (
 	pdfFilePath    = "example.pdf"       // Ścieżka do pliku PDF
 )
 
+// main.go -keep-history=false
 func main() {
+	// Definiowanie flagi wiersza poleceń
+	keepHistory := flag.Bool("keep-history", false, "Czy model ma pamiętać historię rozmowy")
+	flag.Parse() // Parsowanie flag
+
 	// 0. Sprawdzenie czy plik PDF istnieje
 	if _, err := os.Stat(pdfFilePath); os.IsNotExist(err) {
 		log.Fatalf("Plik PDF nie istnieje: %v", err)
@@ -120,8 +126,10 @@ func main() {
 			continue
 		}
 
-		// Dodaj pytanie do historii
-		conversationHistory += fmt.Sprintf("Pytanie: %s\n", question)
+		// Dodaj pytanie do historii, jeśli flaga jest ustawiona
+		if *keepHistory {
+			conversationHistory += fmt.Sprintf("Pytanie: %s\n", question)
+		}
 
 		answer, err := getAnswerFromDocument(ollamaClient, qdrantClient, chatModel, embeddingModel, collectionName, question, conversationHistory)
 		if err != nil {
@@ -130,8 +138,10 @@ func main() {
 			continue
 		}
 
-		// Dodaj odpowiedź do historii
-		conversationHistory += fmt.Sprintf("Odpowiedź: %s\n", answer)
+		// Dodaj odpowiedź do historii, jeśli flaga jest ustawiona
+		if *keepHistory {
+			conversationHistory += fmt.Sprintf("Odpowiedź: %s\n", answer)
+		}
 		fmt.Printf("Pytanie: %s\nOdpowiedź: %s\n", question, answer)
 	}
 }
@@ -225,7 +235,9 @@ func getContextFromQdrant(qdrantClient *qdrant.Client, collectionName string, qu
 
 // Funkcja do zadawania pytania Ollamie z kontekstem
 func askOllamaWithContext(ollamaClient *api.Client, chatModel, question, contextStr string) (string, error) {
-	prompt := fmt.Sprintf(`%s Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu. 
+	prompt := fmt.Sprintf(`
+    %s
+    Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu. 
     Jeśli nie znasz odpowiedzi, powiedz "Nie wiem".
     Pytanie: %s Kontekst: %s Odpowiedź:`, contextStr, question, contextStr)
 

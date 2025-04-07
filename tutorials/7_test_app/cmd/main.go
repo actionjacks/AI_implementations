@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -100,14 +101,32 @@ func main() {
 	}
 	log.Printf("Upsert operation info: %+v", operationInfo)
 
-	// 4. Wyszukiwanie i generowanie odpowiedzi
-	question := "Jakie są główne wnioski z dokumentu?" // Przykładowe pytanie
-	answer, err := getAnswerFromDocument(ollamaClient, qdrantClient, chatModel, embeddingModel, collectionName, question)
-	if err != nil {
-		log.Fatalf("Błąd podczas odpowiadania na pytanie: %v", err)
-	}
+	// Pętla interaktywna
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Print("Zadaj pytanie (lub wpisz 'koniec' aby zakończyć): ")
+		question, _ := reader.ReadString('\n')
+		question = strings.TrimSpace(question)
 
-	fmt.Printf("Pytanie: %s\nOdpowiedź: %s\n", question, answer)
+		if strings.ToLower(question) == "koniec" {
+			fmt.Println("Zakończono.")
+			break
+		}
+
+		if question == "" {
+			fmt.Println("Pytanie nie może być puste. Spróbuj ponownie.")
+			continue
+		}
+
+		answer, err := getAnswerFromDocument(ollamaClient, qdrantClient, chatModel, embeddingModel, collectionName, question)
+		if err != nil {
+			log.Printf("Błąd podczas odpowiadania na pytanie: %v", err)           // Użyj log.Printf zamiast log.Fatalf
+			fmt.Println("Przepraszam, wystąpił problem z uzyskaniem odpowiedzi.") // Informacja dla użytkownika
+			continue                                                              // Przejdź do następnej iteracji pętli
+		}
+
+		fmt.Printf("Pytanie: %s\nOdpowiedź: %s\n", question, answer)
+	}
 }
 
 // Funkcja do ekstrakcji tekstu z pliku PDF
@@ -200,9 +219,8 @@ func getContextFromQdrant(qdrantClient *qdrant.Client, collectionName string, qu
 // Funkcja do zadawania pytania Ollamie z kontekstem
 func askOllamaWithContext(ollamaClient *api.Client, chatModel, question, contextStr string) (string, error) {
 	prompt := fmt.Sprintf(`
-	Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu. 
-	Jeśli nie znasz odpowiedzi, powiedz "Nie wiem".
-	Pytanie: %s Kontekst: %s Odpowiedź:`, question, contextStr)
+    Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu. 
+    Pytanie: %s Kontekst: %s Odpowiedź:`, question, contextStr)
 
 	var response string
 	err := ollamaClient.Generate(context.Background(), &api.GenerateRequest{

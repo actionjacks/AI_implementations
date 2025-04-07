@@ -48,9 +48,11 @@ func showSpinner(done chan bool) {
 	}
 }
 
+// go run main.go -use-context=false
 func main() {
 	// Definiowanie flagi wiersza poleceń
 	keepHistory := flag.Bool("keep-history", false, "Czy model ma pamiętać historię rozmowy")
+	useContext := flag.Bool("use-context", true, "Czy model ma używać kontekstu z dokumentu") // Nowa flaga
 	flag.Parse()
 
 	// 0. Sprawdzenie czy plik PDF istnieje
@@ -154,7 +156,16 @@ func main() {
 		done := make(chan bool)
 		go showSpinner(done)
 
-		answer, err := getAnswerFromDocument(ollamaClient, qdrantClient, chatModel, embeddingModel, collectionName, question, conversationHistory)
+		var answer string
+		var err error
+
+		if *useContext { // Użyj kontekstu z Qdrant, jeśli flaga jest ustawiona
+			answer, err = getAnswerFromDocument(ollamaClient, qdrantClient, chatModel, embeddingModel, collectionName, question, conversationHistory)
+		} else {
+			// Jeśli flaga useContext jest false, po prostu zapytaj Ollamę bez kontekstu
+			answer, err = askOllama(ollamaClient, chatModel, question, conversationHistory)
+		}
+
 		close(done)
 		pterm.Println()
 
@@ -270,10 +281,10 @@ func getContextFromQdrant(qdrantClient *qdrant.Client, collectionName string, qu
 // Funkcja do zadawania pytania Ollamie z kontekstem
 func askOllamaWithContext(ollamaClient *api.Client, chatModel, question, contextStr string) (string, error) {
 	prompt := fmt.Sprintf(`
-	%s
-	Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu.
-	Jeśli nie znasz odpowiedzi, powiedz "Nie wiem".
-	Pytanie: %s Kontekst: %s Odpowiedź:`, contextStr, question, contextStr)
+    %s
+    Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu.
+    Jeśli nie znasz odpowiedzi, powiedz "Nie wiem".
+    Pytanie: %s Kontekst: %s Odpowiedź:`, contextStr, question, contextStr)
 
 	var response string
 	err := ollamaClient.Generate(context.Background(), &api.GenerateRequest{
@@ -291,6 +302,29 @@ func askOllamaWithContext(ollamaClient *api.Client, chatModel, question, context
 	}
 	return response, nil
 	// Komentarz: Ta funkcja wysyła zapytanie do Ollamy z kontekstem.
+}
+
+// Funkcja do zadawania pytania Ollamie bez kontekstu
+func askOllama(ollamaClient *api.Client, chatModel, question string, conversationHistory string) (string, error) {
+	prompt := fmt.Sprintf(`%s
+    Odpowiedz na pytanie: %s Odpowiedź:`, conversationHistory, question)
+
+	var response string
+	err := ollamaClient.Generate(context.Background(), &api.GenerateRequest{
+		Model:  chatModel,
+		Prompt: prompt,
+		Options: map[string]interface{}{
+			"temperature": 0.3,
+		},
+	}, func(genResp api.GenerateResponse) error {
+		response += genResp.Response
+		return nil
+	})
+	if err != nil {
+		return "", fmt.Errorf("błąd generowania odpowiedzi przez Ollama: %v", err)
+	}
+	return response, nil
+	// Komentarz: Ta funkcja wysyła zapytanie do Ollamy bez kontekstu.
 }
 
 // Funkcja do zadawania pytania i uzyskiwania odpowiedzi z kontekstem z Qdrant i Ollamy

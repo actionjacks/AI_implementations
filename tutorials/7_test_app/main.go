@@ -3,16 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 
+	"github.com/ledongthuc/pdf"
 	"github.com/ollama/ollama/api"
 	"github.com/qdrant/go-client/qdrant"
-	"github.com/unidoc/unipdf/v3/extractor"
-	"github.com/unidoc/unipdf/v3/model"
 )
 
 const (
@@ -112,41 +112,18 @@ func main() {
 
 // Funkcja do ekstrakcji tekstu z pliku PDF
 func extractTextFromPDF(path string) (string, error) {
-	file, err := os.Open(path)
+	f, r, err := pdf.Open(path)
 	if err != nil {
-		return "", fmt.Errorf("nie można otworzyć pliku: %v", err)
+		return "", err
 	}
-	defer file.Close()
-
-	pdfReader, err := model.NewPdfReader(file)
+	defer f.Close()
+	var buf strings.Builder
+	b, err := r.GetPlainText()
 	if err != nil {
-		return "", fmt.Errorf("błąd czytania PDF: %v", err)
+		return "", err
 	}
-
-	var text strings.Builder
-	numPages, err := pdfReader.GetNumPages()
-	if err != nil {
-		return "", fmt.Errorf("błąd pobierania liczby stron: %v", err)
-	}
-
-	for i := 1; i <= numPages; i++ {
-		page, err := pdfReader.GetPage(i)
-		if err != nil {
-			return "", fmt.Errorf("błąd pobierania strony %d: %v", i, err)
-		}
-
-		ex, err := extractor.New(page)
-		if err != nil {
-			return "", fmt.Errorf("błąd inicjalizacji ekstraktora: %v", err)
-		}
-
-		pageText, err := ex.ExtractText()
-		if err != nil {
-			return "", fmt.Errorf("błąd ekstrakcji tekstu ze strony %d: %v", i, err)
-		}
-		text.WriteString(pageText + "\n")
-	}
-	return text.String(), nil
+	_, err = io.Copy(&buf, b)
+	return buf.String(), err
 }
 
 // Funkcja do dzielenia tekstu na fragmenty

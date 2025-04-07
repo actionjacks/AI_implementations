@@ -130,7 +130,7 @@ func main() {
 	reader := bufio.NewReader(os.Stdin)
 	conversationHistory := ""
 
-	pterm.Success.Printf("Start a conversation with the model _ %s\n", chatModel)
+	pterm.Success.Printf("Zaczynaj rozmowę z modelem _ %s\n", chatModel)
 	for {
 		question, _ := reader.ReadString('\n')
 		question = strings.TrimSpace(question)
@@ -169,8 +169,8 @@ func main() {
 		}
 
 		// Wyświetl odpowiedź i czas
-		pterm.Success.Printf("question: %s\n", question)
-		pterm.Description.Printf("answer: %s\n", answer)
+		pterm.Success.Printf("Pytanie: %s\n", question)
+		pterm.Description.Printf("Odpowiedź: %s\n", answer)
 		pterm.Info.Printf("Czas odpowiedzi: %s\n", time.Since(time.Now()).String())
 	}
 }
@@ -189,6 +189,7 @@ func extractTextFromPDF(path string) (string, error) {
 	}
 	_, err = io.Copy(&buf, b)
 	return buf.String(), err
+	// Komentarz: Ta funkcja ekstrahuje tekst z pliku PDF.
 }
 
 // Funkcja do dzielenia tekstu na fragmenty
@@ -202,6 +203,7 @@ func splitTextIntoChunks(text string, chunkSize int) []string {
 		chunks = append(chunks, text[i:end])
 	}
 	return chunks
+	// Komentarz: Ta funkcja dzieli tekst na mniejsze fragmenty.
 }
 
 // Funkcja do generowania embeddingów dla wielu fragmentów tekstu
@@ -215,6 +217,7 @@ func generateEmbeddings(client *api.Client, model string, texts []string) ([][]f
 		embeddings = append(embeddings, embedding)
 	}
 	return embeddings, nil
+	// Komentarz: Ta funkcja generuje embeddingi dla listy tekstów.
 }
 
 // Funkcja do generowania embeddingu dla pojedynczego tekstu
@@ -232,6 +235,7 @@ func generateEmbedding(client *api.Client, model, text string) ([]float32, error
 		embedding32[i] = float32(v)
 	}
 	return embedding32, nil
+	// Komentarz: Ta funkcja generuje embedding dla pojedynczego tekstu.
 }
 
 // Funkcja do pobierania kontekstu z Qdrant
@@ -260,15 +264,16 @@ func getContextFromQdrant(qdrantClient *qdrant.Client, collectionName string, qu
 		}
 	}
 	return contextBuilder.String(), nil
+	// Komentarz: Ta funkcja pobiera kontekst z Qdrant na podstawie zapytania.
 }
 
 // Funkcja do zadawania pytania Ollamie z kontekstem
 func askOllamaWithContext(ollamaClient *api.Client, chatModel, question, contextStr string) (string, error) {
 	prompt := fmt.Sprintf(`
-    %s
-    Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu.
-    Jeśli nie znasz odpowiedzi, powiedz "Nie wiem".
-    Pytanie: %s Kontekst: %s Odpowiedź:`, contextStr, question, contextStr)
+	%s
+	Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu.
+	Jeśli nie znasz odpowiedzi, powiedz "Nie wiem".
+	Pytanie: %s Kontekst: %s Odpowiedź:`, contextStr, question, contextStr)
 
 	var response string
 	err := ollamaClient.Generate(context.Background(), &api.GenerateRequest{
@@ -285,6 +290,7 @@ func askOllamaWithContext(ollamaClient *api.Client, chatModel, question, context
 		return "", fmt.Errorf("błąd generowania odpowiedzi przez Ollama: %v", err)
 	}
 	return response, nil
+	// Komentarz: Ta funkcja wysyła zapytanie do Ollamy z kontekstem.
 }
 
 // Funkcja do zadawania pytania i uzyskiwania odpowiedzi z kontekstem z Qdrant i Ollamy
@@ -307,4 +313,5 @@ func getAnswerFromDocument(ollamaClient *api.Client, qdrantClient *qdrant.Client
 		return "", err
 	}
 	return answer, nil
+	// Komentarz: Ta funkcja koordynuje proces uzyskiwania odpowiedzi na pytanie.
 }

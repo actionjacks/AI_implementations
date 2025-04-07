@@ -194,11 +194,12 @@ func generateEmbedding(client *api.Client, model, text string) ([]float32, error
 
 // Funkcja do pobierania kontekstu z Qdrant
 func getContextFromQdrant(qdrantClient *qdrant.Client, collectionName string, questionEmbedding []float32) (string, error) {
+	limit := uint64(5) // Konwersja int do uint64
 	searchResult, err := qdrantClient.Query(context.Background(), &qdrant.QueryPoints{
 		CollectionName: collectionName,
 		Query:          qdrant.NewQuery(questionEmbedding...),
 		WithPayload:    qdrant.NewWithPayload(true),
-		Limit:          5,
+		Limit:          &limit, // Użycie adresu zmiennej typu *uint64
 	})
 	if err != nil {
 		return "", fmt.Errorf("błąd wyszukiwania w Qdrant: %v", err)
@@ -217,6 +218,30 @@ func getContextFromQdrant(qdrantClient *qdrant.Client, collectionName string, qu
 		}
 	}
 	return contextBuilder.String(), nil
+}
+
+// Funkcja do zadawania pytania Ollamie z kontekstem
+func askOllamaWithContext(ollamaClient *api.Client, chatModel, question, contextStr string) (string, error) {
+	prompt := fmt.Sprintf(`
+	Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu. 
+	Jeśli nie znasz odpowiedzi, powiedz "Nie wiem".
+	Pytanie: %s Kontekst: %s Odpowiedź:`, question, contextStr)
+
+	var response string
+	err := ollamaClient.Generate(context.Background(), &api.GenerateRequest{
+		Model:  chatModel,
+		Prompt: prompt,
+		Options: map[string]interface{}{
+			"temperature": 0.3,
+		},
+	}, func(genResp api.GenerateResponse) error {
+		response += genResp.Response
+		return nil
+	})
+	if err != nil {
+		return "", fmt.Errorf("błąd generowania odpowiedzi przez Ollama: %v", err)
+	}
+	return response, nil
 }
 
 // Funkcja do zadawania pytania i uzyskiwania odpowiedzi z kontekstem z Qdrant i Ollamy
@@ -239,28 +264,4 @@ func getAnswerFromDocument(ollamaClient *api.Client, qdrantClient *qdrant.Client
 		return "", err
 	}
 	return answer, nil
-}
-
-// Funkcja do zadawania pytania Ollamie z kontekstem
-func askOllamaWithContext(ollamaClient *api.Client, chatModel, question, contextText string) (string, error) {
-	prompt := fmt.Sprintf(`
-	Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu. 
-	Jeśli nie znasz odpowiedzi, powiedz "Nie wiem". Pytanie: %s Kontekst: %s Odpowiedź:
-	`, question, contextText)
-
-	var response string
-	err := ollamaClient.Generate(context.Background(), &api.GenerateRequest{
-		Model:  chatModel,
-		Prompt: prompt,
-		Options: map[string]interface{}{
-			"temperature": 0.3,
-		},
-	}, func(genResp api.GenerateResponse) error {
-		response += genResp.Response
-		return nil
-	})
-	if err != nil {
-		return "", fmt.Errorf("błąd generowania odpowiedzi przez Ollama: %v", err)
-	}
-	return response, nil
 }

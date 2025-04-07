@@ -242,8 +242,11 @@ func getAnswerFromDocument(ollamaClient *api.Client, qdrantClient *qdrant.Client
 }
 
 // Funkcja do zadawania pytania Ollamie z kontekstem
-func askOllamaWithContext(ollamaClient *api.Client, chatModel, question, context string) (string, error) {
-	prompt := fmt.Sprintf(`Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu.Jeśli nie znasz odpowiedzi, powiedz "Nie wiem". Pytanie: %s Kontekst: %s Odpowiedź:`, question, context)
+func askOllamaWithContext(ollamaClient *api.Client, chatModel, question, contextText string) (string, error) {
+	prompt := fmt.Sprintf(`
+	Odpowiedz na pytanie na podstawie poniższych fragmentów dokumentu. 
+	Jeśli nie znasz odpowiedzi, powiedz "Nie wiem". Pytanie: %s Kontekst: %s Odpowiedź:
+	`, question, contextText)
 
 	var response string
 	err := ollamaClient.Generate(context.Background(), &api.GenerateRequest{

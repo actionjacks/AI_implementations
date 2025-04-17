@@ -1,0 +1,17 @@
+services:
+  local-ai:
+    image: localai/localai:latest-aio-gpu-nvidia-cuda-12
+    container_name: local-ai
+    ports:
+      - "8080:8080"
+    # environment:
+      # MODELS_PATH: /models
+    volumes:
+      - ./models:/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu] # Dodana właściwość capabilities

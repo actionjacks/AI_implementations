@@ -1,3 +1,11 @@
 faster-whisper
 torch
 torchaudio
+chromadb
+pypdf2
+sentence-transformers
+transformers
+accelerate
+llama-cpp-python
+piper-tts
+sounddevice

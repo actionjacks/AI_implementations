@@ -1,7 +1,7 @@
 from llama_cpp import Llama
 import sentence_transformers
 import chromadb
-import piper
+from piper import PiperVoice  # Poprawny import klasy PiperVoice
 import sounddevice as sd
 import numpy as np
 import json
@@ -24,11 +24,7 @@ client = chromadb.HttpClient(host="localhost", port=8000)
 collection = client.get_collection("shop_manual")
 
 # Inicjalizacja Piper TTS
-# with open(VOICE_CONFIG_PATH, 'r') as f:
-#     piper_config = json.load(f)
-# synthesizer = piper(VOICE_ONNX_PATH, piper_config)
-
-synthesizer = piper.PiperVoice.load(VOICE_ONNX_PATH, VOICE_CONFIG_PATH)
+synthesizer = PiperVoice.load(VOICE_ONNX_PATH, VOICE_CONFIG_PATH) # Użycie metody statycznej load()
 
 def retrieve_context(query, top_n=3):
     query_embedding = embedding_model.encode([query]).tolist()
@@ -51,13 +47,14 @@ def generate_response(query, context):
     return output['choices'][0]['text'].strip()
 
 def synthesize_and_play(text):
-    output = synthesizer.synthesize(text)
-    audio = np.array(list(output))
-    sd.play(audio, samplerate=synthesizer.sample_rate)
+    # Zakładam, że metoda synthesize zwraca numpy array lub bytes
+    audio = synthesizer.synthesize_ids_to_raw(synthesizer.phonemes_to_ids(synthesizer.phonemize(text)[0])) # Przetwarzanie tekstu na audio
+    audio_np = np.frombuffer(audio, dtype=np.int16)
+    sd.play(audio_np, samplerate=synthesizer.config.sample_rate)
     sd.wait()
 
 if __name__ == "__main__":
-    user_query = "Jakie eydtować pracownika?"
+    user_query = "JAk założyć Inwentaryzację?"
     context = retrieve_context(user_query)
     if context:
         response = generate_response(user_query, context)

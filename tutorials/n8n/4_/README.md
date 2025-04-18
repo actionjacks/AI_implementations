@@ -19,8 +19,6 @@ n8n instance if you use this setup instead of the base one provided by n8n!
 
 - Download my N8N + OpenWebUI integration [directly on the Open WebUI site.](https://openwebui.com/f/coleam/n8n_pipe/) (more instructions below)
 
-![n8n.io - Screenshot](https://raw.githubusercontent.com/n8n-io/self-hosted-ai-starter-kit/main/assets/n8n-demo.gif)
-
 Curated by <https://github.com/n8n-io> and <https://github.com/coleam00>, it combines the self-hosted n8n
 platform with a curated list of compatible AI products and components to
 quickly get started with building self-hosted AI workflows.
@@ -261,6 +259,11 @@ docker compose -p localai --profile <your-profile> -f docker-compose.yml -f supa
 
 # Start services again with your desired profile
 python start_services.py --profile <your-profile>
+```
+
+example:
+```bash
+docker compose -p localai --profile gpu-nvidia -f docker-compose.yml -f supabase/docker/docker-compose.yml down
 ```
 
 Replace `<your-profile>` with one of: `cpu`, `gpu-nvidia`, `gpu-amd`, or `none`.

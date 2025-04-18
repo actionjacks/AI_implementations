@@ -5,4 +5,4 @@ services:
     image: ollama/ollama:latest  # Użyj odpowiedniego obrazu Ollama
     ports:
       - "11434:11434"  # Mapowanie portu 11434 kontenera na port 11434 hosta
-    restart: always
+    # restart: unless-stopped

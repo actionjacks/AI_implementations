@@ -5,6 +5,7 @@ https://github.com/SYSTRAN/faster-whisper
 
 
 ```bash
+source venv/bin/activate
 sudo apt-get update
 sudo apt-get install libportaudio2 libportaudiocpp0
 ```

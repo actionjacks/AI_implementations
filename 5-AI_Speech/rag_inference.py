@@ -47,11 +47,13 @@ def generate_response(query, context):
     return output['choices'][0]['text'].strip()
 
 def synthesize_and_play(text):
+    for phonem in synthesizer.phonemize(text):
+
     # Zakładam, że metoda synthesize zwraca numpy array lub bytes
-    audio = synthesizer.synthesize_ids_to_raw(synthesizer.phonemes_to_ids(synthesizer.phonemize(text)[0])) # Przetwarzanie tekstu na audio
-    audio_np = np.frombuffer(audio, dtype=np.int16)
-    sd.play(audio_np, samplerate=synthesizer.config.sample_rate)
-    sd.wait()
+        audio = synthesizer.synthesize_ids_to_raw(synthesizer.phonemes_to_ids(phonem)) # Przetwarzanie tekstu na audio
+        audio_np = np.frombuffer(audio, dtype=np.int16)
+        sd.play(audio_np, samplerate=synthesizer.config.sample_rate)
+        sd.wait()
 
 if __name__ == "__main__":
     user_query = "JAk założyć Inwentaryzację?"

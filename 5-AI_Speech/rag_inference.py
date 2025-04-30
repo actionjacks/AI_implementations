@@ -6,6 +6,10 @@ import sounddevice as sd
 import numpy as np
 import json
 
+"""Ten skrypt łączy model Llama z bazą danych ChromaDB oraz syntezatorem mowy Piper.
+Zawiera funkcje do pobierania kontekstu z bazy danych, generowania odpowiedzi oraz syntezowania mowy.
+"""
+
 # Ścieżka do pobranego modelu GGUF
 MODEL_PATH = "models/mistral-7b-v0.1.Q3_K_S.gguf" # Zmień na ścieżkę do Twojego modelu
 
@@ -46,15 +50,25 @@ def generate_response(query, context):
     output = llm(prompt, max_tokens=512, stop=["Q:", "\n\n"], echo=False)
     return output['choices'][0]['text'].strip()
 
-def synthesize_and_play(text):
-    # Zakładam, że metoda synthesize zwraca numpy array lub bytes
-    audio = synthesizer.synthesize_ids_to_raw(synthesizer.phonemes_to_ids(synthesizer.phonemize(text)[0])) # Przetwarzanie tekstu na audio
-    audio_np = np.frombuffer(audio, dtype=np.int16)
-    sd.play(audio_np, samplerate=synthesizer.config.sample_rate)
-    sd.wait()
+def synthesize_and_play(text: str) -> None:
+    """Funkcja do syntezowania mowy i odtwarzania dźwięku.
+    
+    Params:
+        text (str): Tekst do syntezowania i odtwarzania.
+    
+    Returns:
+        None
+    """
+    
+    for phonem in synthesizer.phonemize(text):
+        # Zakładam, że metoda synthesize zwraca numpy array lub bytes
+        audio = synthesizer.synthesize_ids_to_raw(synthesizer.phonemes_to_ids(phonem)) # Przetwarzanie tekstu na audio
+        audio_np = np.frombuffer(audio, dtype=np.int16)
+        sd.play(audio_np, samplerate=synthesizer.config.sample_rate)
+        sd.wait()
 
 if __name__ == "__main__":
-    user_query = "JAk założyć Inwentaryzację?"
+    user_query = "Mam zły kod paskowy. Jak go naprawić?"  # Przykładowe zapytanie użytkownika
     context = retrieve_context(user_query)
     if context:
         response = generate_response(user_query, context)

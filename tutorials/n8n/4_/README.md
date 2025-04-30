@@ -276,6 +276,8 @@ Here are solutions to common issues you might encounter:
 
 ### Supabase Issues
 
+- **N8N password**: ```docker exec -u node -it n8n n8n user-management:reset``` restart docker.
+
 - **Supabase Pooler Restarting**: If the supabase-pooler container keeps restarting itself, follow the instructions in [this GitHub issue](https://github.com/supabase/supabase/issues/30210#issuecomment-2456955578).
 
 - **Supabase Analytics Startup Failure**: If the supabase-analytics container fails to start after changing your Postgres password, delete the folder `supabase/docker/volumes/db/data`.
